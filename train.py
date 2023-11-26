@@ -3,7 +3,7 @@ import os
 import time
 import argparse
 from tqdm import tqdm
-import torch
+import torch, gc
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from dataset.dataset_sig17 import SIG17_Training_Dataset, SIG17_Validation_Dataset, SIG17_Test_Dataset
@@ -54,20 +54,24 @@ def get_args():
 
 
 def train(args, model, device, train_loader, optimizer, epoch, criterion):
-    model.train()
+    model.train() # 将模型设置为训练模式
     batch_time = AverageMeter()
     data_time = AverageMeter()
     end = time.time()
-    for batch_idx, batch_data in enumerate(train_loader):
-        data_time.update(time.time() - end)
+    # 遍历数据集中的批次数据
+    for batch_idx, batch_data in enumerate(train_loader): 
+        data_time.update(time.time() - end) # 更新数据加载时间和批处理时间
+        # 将数据发送到GPU上
         batch_ldr0, batch_ldr1, batch_ldr2 = batch_data['input0'].to(device), batch_data['input1'].to(device), \
                                              batch_data['input2'].to(device)
         label = batch_data['label'].to(device)
-        pred = model(batch_ldr0, batch_ldr1, batch_ldr2)
-        loss = criterion(pred, label)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        pred = model(batch_ldr0, batch_ldr1, batch_ldr2) # 获取模型的预测结果
+        loss = criterion(pred, label) # 计算损失函数
+
+        optimizer.zero_grad() # 清楚梯度
+        loss.backward() # 反向传播
+        optimizer.step() # 通过梯度下降执行参数更新
+
         batch_time.update(time.time() - end)
         end = time.time()
         if batch_idx % args.log_interval == 0:
@@ -84,7 +88,7 @@ def train(args, model, device, train_loader, optimizer, epoch, criterion):
             ))
 
 def validation(args, model, device, val_loader, optimizer, epoch, criterion, cur_psnr):
-    model.eval()
+    model.eval() # 将模型设置为评估模式
     n_val = len(val_loader)
     val_psnr = AverageMeter()
     val_mu_psnr = AverageMeter()
