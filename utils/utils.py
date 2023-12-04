@@ -24,9 +24,9 @@ def read_images(file_names):
     for img_str in file_names:
         img = cv2.imread(img_str, -1)
         # equivalent to im2single from Matlab
-        img = img / 2 ** 16
+        img = img / 2 ** 16 ## 归一化
         img = np.float32(img)
-        img.clip(0, 1)
+        img.clip(0, 1) ## 截断数据，保证数据在0-1之间
         imgs.append(img)
     return np.array(imgs)
 
@@ -50,11 +50,17 @@ def range_compressor_tensor(x, device):
     return (torch.log(a + mu * x)) / torch.log(a + mu)
 
 def psnr(x, target):
+    """
+    计算一个图像与目标图像之间的PSNR值
+    """
     sqrdErr = np.mean((x - target) ** 2)
     return 10 * log10(1/sqrdErr)
 
 def batch_psnr(img, imclean, data_range):
-    Img = img.data.cpu().numpy().astype(np.float32)
+    """
+    计算一批生成图像与对应的原始图像之间的平均PSNR值
+    """
+    Img = img.data.cpu().numpy().astype(np.float32) # 将输入的PyTorch张量转换为Numpy数组
     Iclean = imclean.data.cpu().numpy().astype(np.float32)
     psnr = 0
     for i in range(Img.shape[0]):
@@ -62,6 +68,7 @@ def batch_psnr(img, imclean, data_range):
     return (psnr/Img.shape[0])
 
 def batch_psnr_mu(img, imclean, data_range):
+    # 对生成的图像进行范围压缩
     img = range_compressor_cuda(img)
     imclean = range_compressor_cuda(imclean)
     Img = img.data.cpu().numpy().astype(np.float32)
@@ -72,7 +79,10 @@ def batch_psnr_mu(img, imclean, data_range):
     return (psnr/Img.shape[0])
 
 def adjust_learning_rate(args, optimizer, epoch):
-    lr = args.lr * (0.5 ** (epoch // args.lr_decay_interval))
+    """
+    根据当前的epoch来动态调整优化器的学习率
+    """
+    lr = args.lr * (0.5 ** (epoch // args.lr_decay_interval)) # 使用
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
