@@ -49,7 +49,7 @@ def main():
         0: HDRTransformer(embed_dim=60, depths=[6, 6, 6], num_heads=[6, 6, 6], mlp_ratio=2, in_chans=6),
     }
     model = model_dict[args.model_arch].to(device)
-    model = nn.DataParallel(model)
+    model = nn.DataParallel(model) # 将数据分散到多个GPU上
     model.load_state_dict(torch.load(args.pretrained_model)['state_dict'])
     model.eval()
 

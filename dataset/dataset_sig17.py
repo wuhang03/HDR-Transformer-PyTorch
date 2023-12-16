@@ -222,5 +222,5 @@ def SIG17_Test_Dataset(root_dir, patch_size):
     for ldr_dir, label_dir, expo_times_dir in zip(ldr_list, label_list, expo_times_list):
         yield Img_Dataset(ldr_dir, label_dir, expo_times_dir, patch_size)
 
-
+    
 
